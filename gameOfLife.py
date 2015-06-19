@@ -2,6 +2,11 @@ __author__ = 'Sebastiano'
 
 
 import sys
+import numpy as np
+import scipy.ndimage
+from moviepy.editor import VideoClip
+
+
 
 class unit(object):
     def __init__(self):
@@ -63,9 +68,12 @@ class unit(object):
 
 
 class grid(object):
-    def __init__(self, xRange, yRange):
+         
+    
+    def __init__(self, xRange, yRange, res):
         self.xRange = xRange
         self.yRange = yRange
+        self.res = res        
         self.field = [[unit() for x in range(xRange)] for y in range(yRange)]
         self.initGrid()
 
@@ -92,24 +100,35 @@ class grid(object):
         for xG in range(self.xRange):
             for yG in range(self.yRange):
                 self.field[xG][yG].alive = self.field[xG][yG].willLive
+    
+    def buildImageArray(self):
+        
+        x = np.array([[(1-int(self.field[x][y].alive))*255 for x in range(self.xRange)] for y in range(self.yRange)])
+        x = scipy.ndimage.zoom(x, self.res, order=0)        
+    
+        return x 
+
+
+def make_frame(t):
+
+    global newGrid  
+
+    if t == 0:    
+        newGrid = grid(150,150,4)
+    else:
+        newGrid.updateGrid()   
+    
+    return newGrid.buildImageArray() # (Height x Width x 3) Numpy array
 
 
 def main(argv):
-
-    newGrid = grid(40,40)
-    newGrid.updateGrid()
-    newGrid.updateGrid()
-    newGrid.updateGrid()
-    newGrid.updateGrid()
-    newGrid.updateGrid()
-    newGrid.updateGrid()
-    newGrid.updateGrid()
-
-    print [[int(newGrid.field[x][y].alive) for x in range(newGrid.xRange)] for y in range(newGrid.yRange)]
-    # for x in range(newGrid.xRange):
-    #     for y in range(newGrid.yRange):
-
-    pass
+    
+  
+    animation = VideoClip(make_frame, duration=60) # durration is seconds
+    animation.write_videofile("my_animation.mp4", fps=6) # export as video
+    animation.write_gif("my_animation.gif", fps=6) # export as GIF (slow
+    
+pass
 
 if __name__ == "__main__":
     main(sys.argv)
